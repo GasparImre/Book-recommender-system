@@ -40,14 +40,16 @@ average_ratings['ratings-count']=joined_datas.groupby('ISBN')['ISBN'].transform(
 average_ratings = average_ratings.loc[average_ratings['ratings-count']>MINIMUM_TO_INCLUDE]
 average_ratings = average_ratings.merge(books, on='ISBN', how='inner')
 
-author="J. K. Rowling"
+def recommended_for_a_fan(author,average_ratings):
+    average_ratings = average_ratings.loc[average_ratings['Book-Author'].str.contains(author, na=False)]
+    sorted_average = average_ratings.sort_values(by="Book-Rating", ascending=False)
+    columns_need = ['Book-Rating', 'Book-Title' ]
+    # filtered_ratings=sorted_average.where(filter)
+    print(f"Egy {author} fannak ajánlott\n{sorted_average[columns_need].head(ROWS_TO_SHOW)}")
+    print("\n")
 
-average_ratings = average_ratings.loc[average_ratings['Book-Author'].str.contains(author, na=False)]
-sorted_average = average_ratings.sort_values(by="Book-Rating", ascending=False)
-columns_need=['Book-Rating','Book-Title',]
-# filtered_ratings=sorted_average.where(filter)
-print(f"Egy {author} fannak ajánlott\n{sorted_average[columns_need].head(ROWS_TO_SHOW)}")
-print('\n')
+recommended_for_a_fan("Stephen King",average_ratings)
+recommended_for_a_fan("J. K. Rowling",average_ratings)
 
 
 
