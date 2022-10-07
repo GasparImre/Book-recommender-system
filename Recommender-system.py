@@ -1,7 +1,7 @@
 import pandas as pd
 import csv
 from lenskit.algorithms import Recommender
-from lenskit.algorithms.user_knn import UserUser # TODO: import fix 
+from lenskit.algorithms.user_knn import UserUser # TODO: import fix
 
 #_______________________KONSTANSOK_____________________________
 ROWS_TO_SHOW = 10 # Sorok számát határozza meg / The number of rows that we want to display
