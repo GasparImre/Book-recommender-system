@@ -1,14 +1,14 @@
 import pandas as pd
 import csv
 from lenskit.algorithms import Recommender
-from lenskit.algorithms.user_knn import UserUser # TODO: import fix
+from lenskit.algorithms.user_knn import UserUser
 
 #_______________________KONSTANSOK_____________________________
 ROWS_TO_SHOW = 10 # Sorok számát határozza meg / The number of rows that we want to display
 MINIMUM_TO_INCLUDE = 20 # A minimum értékelések számát határozza meg / Minimum value of the count coulmn
 NUMBER_OF_RECOMMENDATIONS = 10 #Mennyi könyvet ajánljon / How much book should it recommend
-MIN_NEIGHBORS = 3   # A minimum ember szám az értékelések figyelembe vételekor / Minimum number of Neighbors
-MAX_NEIGHBORS = 15  # A maximum ember szám az értékelések figyelembe vételekor / Maximum number of neighbors
+MIN_NEIGHBORS = 8  # A minimum ember szám az értékelések figyelembe vételekor / Minimum number of Neighbors
+MAX_NEIGHBORS = 20  # A maximum ember szám az értékelések figyelembe vételekor / Maximum number of neighbors
 
 books = pd.read_csv('./books-modded.csv',sep=';',encoding='latin')                            # Every neccesary csv will be imported there that means 2
 columns_need = ['ISBN','Book-Title','Book-Author','Year-Of-Publication','Publisher']        # Minden szükséges adatot betöltünk ez 3 betöltést jelent
@@ -62,7 +62,8 @@ with open("my_ratings.csv",'r') as data:
 print("Az értékelő dictionary összegyűjtve!")
 print(f"Az értékelésem a 553210424 ISBN számú Metamorphosis-ra {str(my_rating_dict['553210424'])}")
 
-ratings.rename(columns={"User-ID":"user","ISBN":"item","Book-Rating":"rating"},inplace=True) #Át kell nevezni az oszlopokat mert más neveket tartalmaz amit az algoritmus keres
+ratings.rename(columns={"User-ID":"user","ISBN":"item","Book-Rating":"rating"},inplace=True)
+books.rename(columns={"ISBN":"item"},inplace=True) #Át kell nevezni az oszlopokat mert más neveket tartalmaz amit az algoritmus keres
 user_user= UserUser(MAX_NEIGHBORS, min_nbrs=MIN_NEIGHBORS,MKL_NUM_THREADS=1) # <-- ez a 2 szám a gyárilag (15 és 3), az ajánlott, de később lehet kísérletezni ezek átállításával
 algorithm = Recommender.adapt(user_user)
 algorithm.fit(ratings) # TODO: add blinking message until it isn't done
@@ -70,7 +71,13 @@ algorithm.fit(ratings) # TODO: add blinking message until it isn't done
 
 print(f"\n\n\nUser-User algoritmus elkészítve!")
 
-mine_recommendations = algorithm.recommend(-1,NUMBER_OF_RECOMMENDATIONS, ratings=pd.Series(my_rating_dict)) # -1 mutatja hogy egy nem létező felhasználóról van szó
-joined_datas=mine_recommendations.merge(books,on="ISBN",how="inner")                                        # -1 shows that it is a new user
+mine_recommendations = algorithm.recommend(-1,n=NUMBER_OF_RECOMMENDATIONS, ratings=pd.Series(my_rating_dict)) # -1 mutatja hogy egy nem létező felhasználóról van szó
+
+for i in range(0,mine_recommendations["item"].size,1):
+    mine_recommendations["item"][i] = mine_recommendations["item"][i].lstrip('0')
+
+
+joined_datas=mine_recommendations.merge(books,how="inner")    # -1 shows that it is a new user
+columns_need = ['Book-Title','Book-Author']
 print("\n\n Nekem ajánlva:\n")
-print(joined_datas)
+print(joined_datas[columns_need].head(NUMBER_OF_RECOMMENDATIONS))
