@@ -5,7 +5,7 @@ from lenskit.algorithms.user_knn import UserUser
 
 # _______________________KONSTANSOK_____________________________
 ROWS_TO_SHOW = 10  # Sorok számát határozza meg / The number of rows that we want to display
-MINIMUM_TO_INCLUDE = 20  # A minimum értékelések számát határozza meg / Minimum value of the count coulmn
+MINIMUM_TO_INCLUDE = 200  # A minimum értékelések számát határozza meg / Minimum value of the count coulmn
 NUMBER_OF_RECOMMENDATIONS = 10  # Mennyi könyvet ajánljon / How much book should it recommend
 MIN_NEIGHBORS = 8  # A minimum ember szám az értékelések figyelembe vételekor / Minimum number of Neighbors
 MAX_NEIGHBORS = 20  # A maximum ember szám az értékelések figyelembe vételekor / Maximum number of neighbors
@@ -27,31 +27,26 @@ print(f'\n____________________________Adatok Betöltve__________________________
 
 joined_datas = ratings.merge(books, how='inner')
 
-average_ratings = (joined_datas).groupby(['ISBN'],
-                                         as_index=False).mean()  # kell az as_index=False mert másképp indexbe helyezi \
-sorted_average = average_ratings.sort_values(by="Book-Rating",
-                                             ascending=False)  # az ISBN-t és utána nem lehet aszerint joinolni
-recommended_joined_datas = sorted_average.merge(books, on='ISBN',
-                                                how='inner')  # Without "as_index=False" impossible to join the two files
+average_ratings = joined_datas.groupby(['ISBN'],as_index=False).mean()  # kell az as_index=False mert másképp indexbe helyezi \
+sorted_average = average_ratings.sort_values(by="Book-Rating", ascending=False)  # az ISBN-t és utána nem lehet aszerint joinolni
+recommended_joined_datas = sorted_average.merge(books, on='ISBN',how='inner')  # Without "as_index=False" impossible to join the two files
 
 print("Mindenkinek ajánlott")
-print(recommended_joined_datas.head(ROWS_TO_SHOW))
+columns_need = ['Book-Rating','Book-Title']
+print(recommended_joined_datas[columns_need].head(ROWS_TO_SHOW))
 
-average_ratings['ratings-count'] = joined_datas.groupby('ISBN')['ISBN'].transform(
-    'count')  # hozzá kell adni egy számláló sort is mert nem tudhatjuk hogy hányan értékelik a könyvet
+average_ratings['ratings-count'] = joined_datas.groupby('ISBN')['ISBN'].transform('count')  # hozzá kell adni egy számláló sort is mert nem tudhatjuk hogy hányan értékelik a könyvet
 average_ratings = average_ratings.loc[average_ratings['ratings-count'] > MINIMUM_TO_INCLUDE]
 average_ratings = average_ratings.merge(books, on='ISBN', how='inner')
+sorted_average = average_ratings.sort_values(by="Book-Rating", ascending=False)
+print(f"Legalább {MINIMUM_TO_INCLUDE} olvasó által értékelve \n {sorted_average[columns_need].head(ROWS_TO_SHOW)} \n")
 
 
 def recommended_for_a_fan(author, average_ratings):  # just write the name of the author and\
-    average_ratings = average_ratings.loc[average_ratings['Book-Author'].str.contains(author,
-                                                                                      na=False)]  # the average_ratings dataset, and you got the rated books from that author
+    average_ratings = average_ratings.loc[average_ratings['Book-Author'].str.contains(author, na=False)]  # the average_ratings dataset, and you got the rated books from that author
     sorted_average = average_ratings.sort_values(by="Book-Rating", ascending=False)
-    columns_need = ['Book-Rating',
-                    'Book-Title']  # Az író nevét és a average_ratings-et kell a paraméterekhez írni és már
-    print(
-        f"Egy {author} fannak ajánlott\n{sorted_average[columns_need].head(ROWS_TO_SHOW)}")  # ki is írja az értékelt könyveket attól az írótól
-    print("\n")
+    columns_need = ['Book-Rating','Book-Title']  # Az író nevét és a average_ratings-et kell a paraméterekhez írni és már
+    print(f"Egy {author} fannak ajánlott\n{sorted_average[columns_need].head(ROWS_TO_SHOW)}\n")  # ki is írja az értékelt könyveket attól az írótól
 
 
 recommended_for_a_fan("Stephen King", average_ratings)
@@ -65,7 +60,7 @@ with open("my_ratings.csv", 'r') as data:
         my_rating_dict.update({str(line['ISBN']): float(line['Rating'])})
 
 print("Az értékelő dictionary összegyűjtve!")
-print(f"Az értékelésem a 553210424 ISBN számú Metamorphosis-ra {str(my_rating_dict['553210424'])}")
+print(f"Az értékelésem az 553210424 ISBN számú Metamorphosis-ra {str(my_rating_dict['553210424'])}")
 
 ratings.rename(columns={"User-ID": "user", "ISBN": "item", "Book-Rating": "rating"}, inplace=True)
 books.rename(columns={"ISBN": "item"},
